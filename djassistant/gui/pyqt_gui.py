@@ -52,9 +52,6 @@ class DJAssistantApp(QWidget):
             lbl.setStyleSheet("font-size: 20px;")
             layout.addWidget(lbl)
 
-        self.visual = BeatCircle()
-        layout.addWidget(self.visual)
-
         self.dancer = DanceAnimator("animation/cool_cat/cool_cat_frames", frames=16)
         layout.addWidget(self.dancer)
 
@@ -118,12 +115,6 @@ class DJAssistantApp(QWidget):
             self.bpm_label.setText(f"BPM: {int(bpm)}" if bpm else "BPM: --")
             self.freq_label.setText(f"Freq: {int(freq)} Hz" if freq else "Freq: --")
             self.genre_label.setText(f"Genre: {genre}" if genre else "Genre: --")
-
-            if beat:
-                self.visual.flash("cyan")
-            else:
-                color = "blue" if freq and int(freq) % 2 == 0 else "red"
-                self.visual.set_color(color)
 
             if bpm:
                 self.dancer.update_bpm(bpm)
