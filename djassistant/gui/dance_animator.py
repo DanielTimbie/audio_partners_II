@@ -13,6 +13,7 @@ class DanceAnimator(QLabel):
         self.timer = QTimer()
         self.timer.timeout.connect(self._next_frame)
         self._load_frames(folder, frames)
+        self._current_bpm = None
 
     def _load_frames(self, folder, count):
         self.frames.clear()
@@ -40,7 +41,13 @@ class DanceAnimator(QLabel):
         self.timer.stop()
 
     def update_bpm(self, bpm):
-        self.start(bpm)
+        if not self.frames:
+            return
+        if self._current_bpm == bpm:
+            return  # No change needed
+        self._current_bpm = bpm
+        interval = int((60 / bpm) * 1000 / len(self.frames))
+        self.timer.start(interval)
 
     def switch_dance(self, new_folder, frame_count=16):
         self.stop()

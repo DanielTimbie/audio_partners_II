@@ -2,5 +2,6 @@ numpy
 librosa
 soundfile
 pyaudio
-tk
 sounddevice
+PyQt5
+# pyqtgraph
