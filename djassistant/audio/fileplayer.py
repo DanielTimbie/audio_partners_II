@@ -13,9 +13,12 @@ class AudioFilePlayer:
         self.frame_queue = queue.Queue()
         self._stop_flag = False
         self._paused = False
+        
+        # Open the file and get its native sample rate
         self._file = sf.SoundFile(self.filepath, 'r')
-        self.sample_rate = self._file.samplerate  # Use native sample rate
-        print("Sample rate:", self.sample_rate)
+        self.sample_rate = self._file.samplerate  # Use the file's actual sample rate
+        print(f"Audio file sample rate: {self.sample_rate} Hz")
+        
         self.channels = 1  # force mono for simplicity
         self.current_frame = 0
         self.total_frames = len(self._file)
@@ -24,34 +27,38 @@ class AudioFilePlayer:
         threading.Thread(target=self._read_loop, daemon=True).start()
 
     def _read_loop(self):
-        print("Starting audio playback thread")
+        """Read audio frames from file and put them in the queue."""
+        print(f"Starting audio playback thread with sample rate: {self.sample_rate} Hz")
+        
         with sd.OutputStream(samplerate=self.sample_rate, channels=1) as stream:
-            print(f"Output stream using sample rate: {self.sample_rate}")
+            print(f"Output stream initialized with sample rate: {self.sample_rate} Hz")
+            
+            self._file.seek(0)
             while not self._stop_flag:
                 if self._paused:
-                    time.sleep(0.05)
+                    time.sleep(0.1)
                     continue
-
-                data = self._file.read(self.chunk_size, dtype='float32')
-                self.current_frame = self._file.tell()
-
-                if len(data) == 0:
-                    print("End of file, looping")
-                    self._file.seek(0)
-                    continue
-
-                # Downmix stereo to mono
-                if data.ndim > 1:
-                    data = data.mean(axis=1)
-
-                stream.write(data)
-
-                try:
-                    self.frame_queue.put_nowait(data.copy())  # safe copy
-                except queue.Full:
-                    pass
-
-                time.sleep(len(data) / self.sample_rate)
+                    
+                # Read a chunk of audio with explicit float32 dtype
+                frames = self._file.read(self.chunk_size, dtype='float32')
+                if len(frames) == 0:
+                    # End of file
+                    if self.loop:
+                        self._file.seek(0)
+                        continue
+                    else:
+                        break
+                    
+                # Convert to mono if needed
+                if frames.ndim > 1:
+                    frames = frames.mean(axis=1)
+                    
+                # Put in queue and update position
+                self.frame_queue.put(frames)
+                self.current_frame += len(frames)
+                
+                # Update stream
+                stream.write(frames)
 
     def pause(self):
         self._paused = True

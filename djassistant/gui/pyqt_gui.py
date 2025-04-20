@@ -7,6 +7,7 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtGui import QColor, QPainter, QBrush
 from PyQt5.QtCore import Qt, QTimer
+from djassistant.gui.dance_animator import DanceAnimator
 
 
 class BeatCircle(QWidget):
@@ -53,6 +54,9 @@ class DJAssistantApp(QWidget):
 
         self.visual = BeatCircle()
         layout.addWidget(self.visual)
+
+        self.dancer = DanceAnimator("animation/cool_cat/cool_cat_frames", frames=16)
+        layout.addWidget(self.dancer)
 
         self.play_button = QPushButton("Play")
         self.play_button.clicked.connect(self.toggle_play)
@@ -120,6 +124,9 @@ class DJAssistantApp(QWidget):
             else:
                 color = "blue" if freq and int(freq) % 2 == 0 else "red"
                 self.visual.set_color(color)
+
+            if bpm:
+                self.dancer.update_bpm(bpm)
 
     def toggle_play(self):
         if not self.player:
